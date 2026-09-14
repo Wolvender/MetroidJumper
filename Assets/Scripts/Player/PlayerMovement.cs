@@ -9,7 +9,8 @@ namespace MetroidJumper.Player
         private Rigidbody2D _rigidbody;
         private readonly Collider2D[] _groundHits = new Collider2D[1];
         private float _horizontalInput;
-        private bool _jumpRequested;
+        private float _jumpBufferTimer;
+        private float _coyoteTimer;
         private int _jumpsUsed;
         private int _wallContacts;
         private float _wallStickTimer;
@@ -25,8 +26,10 @@ namespace MetroidJumper.Player
         [SerializeField] private string wallTag = "Wall";
         [SerializeField] private float wallStickTime = 1f;
         [SerializeField] private float wallSlideSpeed = 3f;
-        [SerializeField] private float wallJumpHorizontalForce = 6f;
+        [SerializeField] private float wallJumpHorizontalForce = 9f;
         [SerializeField] private float wallJumpLockTime = 0.2f;
+        [SerializeField] private float coyoteTime = 0.12f;
+        [SerializeField] private float jumpBufferTime = 0.12f;
 
         public bool IsGrounded { get; private set; }
         public bool IsTouchingWall { get; private set; }
@@ -51,7 +54,7 @@ namespace MetroidJumper.Player
             if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) _horizontalInput -= 1f;
             if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) _horizontalInput += 1f;
 
-            if (keyboard.spaceKey.wasPressedThisFrame) _jumpRequested = true;
+            if (keyboard.spaceKey.wasPressedThisFrame) _jumpBufferTimer = jumpBufferTime;
         }
 
         private void FixedUpdate()
@@ -66,6 +69,8 @@ namespace MetroidJumper.Player
 
             if (isGrounded) _jumpsUsed = 0;
             _wallStickTimer = isTouchingWall ? _wallStickTimer + Time.fixedDeltaTime : 0f;
+            _coyoteTimer = isGrounded ? coyoteTime : _coyoteTimer - Time.fixedDeltaTime;
+            if (_jumpBufferTimer > 0f) _jumpBufferTimer -= Time.fixedDeltaTime;
 
             Vector2 velocity = _rigidbody.linearVelocity;
 
@@ -78,7 +83,8 @@ namespace MetroidJumper.Player
                 velocity.x = _horizontalInput * moveSpeed;
             }
 
-            if (_jumpRequested && _jumpsUsed < maxJumps)
+            bool canJump = _jumpsUsed < maxJumps && (isTouchingWall || _jumpsUsed > 0 || isGrounded || _coyoteTimer > 0f);
+            if (_jumpBufferTimer > 0f && canJump)
             {
                 if (isTouchingWall)
                 {
@@ -96,8 +102,10 @@ namespace MetroidJumper.Player
                     velocity.y = jumpForce;
                     Jumped?.Invoke();
                 }
+
+                _jumpBufferTimer = 0f;
+                _coyoteTimer = 0f;
             }
-            _jumpRequested = false;
 
             if (isTouchingWall)
             {

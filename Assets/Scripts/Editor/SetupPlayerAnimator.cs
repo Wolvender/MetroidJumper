@@ -13,6 +13,7 @@ namespace MetroidJumper.EditorTools
         private const string ClipsFolder = "Assets/Animation/Clips";
 
         private const string RunningPath = "Assets/sprites/Animations/Running.png";
+        private const string WalkingPath = "Assets/sprites/Animations/Walking.png";
         private const string JumpingPath = "Assets/sprites/Animations/Jumping.png";
         private const string DoubleJumpPath = "Assets/sprites/Animations/Double_Jump.png";
         private const string FallingPath = "Assets/sprites/Animations/Falling.png";
@@ -110,7 +111,7 @@ namespace MetroidJumper.EditorTools
             AnimatorStateMachine root = controller.layers[0].stateMachine;
 
             AnimatorState idle = root.AddState("Idle");
-            idle.motion = CreateClipFromSpriteSheet(RunningPath, "Idle", 1f, true, 1);
+            idle.motion = CreateClipFromSpriteSheet(WalkingPath, "Idle", 1f, true, 1);
 
             AnimatorState run = root.AddState("Run");
             run.motion = CreateClipFromSpriteSheet(RunningPath, "Run", 12f, true);
